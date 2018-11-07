@@ -128,7 +128,13 @@ NSString* addVersionToUrlIfRequired(NSString* page) {
     NSString *oldContentSrc = [defaults objectForKey:kContentSrc];
 
     NSString *launchUrl = [defaults objectForKey:kStartPage];
-    if([contentSrc isEqual:oldContentSrc] && launchUrl) {
+    BOOL isDir = NO;
+    BOOL isFileExists = [[NSFileManager defaultManager] fileExistsAtPath:launchUrl isDirectory:&isDir];
+    if (launchUrl && !isFileExists) {
+        NSLog(@"launchUrl NOT exists %@, APP bundlePath=%@", launchUrl, [[NSBundle mainBundle] bundlePath]);
+    }
+
+    if([contentSrc isEqual:oldContentSrc] && isFileExists) {
         self.viewController.startPage = launchUrl;
     } else {
         self.viewController.startPage = contentSrc;
