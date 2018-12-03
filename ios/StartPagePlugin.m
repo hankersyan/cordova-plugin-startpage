@@ -110,6 +110,11 @@ NSString* addVersionToUrlIfRequired(NSString* page) {
 #pragma mark StartPage Setter Category
 
 @implementation CDVAppDelegate (New)
+    
++ (NSURL *)applicationLibraryDirectory
+{
+    return [[[NSFileManager defaultManager] URLsForDirectory:NSLibraryDirectory inDomains:NSUserDomainMask] lastObject];
+}
 
 - (void)bootstrap {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
@@ -130,8 +135,25 @@ NSString* addVersionToUrlIfRequired(NSString* page) {
     NSString *launchUrl = [defaults objectForKey:kStartPage];
     BOOL isDir = NO;
     BOOL isFileExists = [[NSFileManager defaultManager] fileExistsAtPath:launchUrl isDirectory:&isDir];
+    
+    if ([launchUrl hasPrefix:@"file:///"] && !isFileExists) {
+        NSURL* libDir = [CDVAppDelegate applicationLibraryDirectory];
+        NSRange rang = [launchUrl rangeOfString:@"/Library/files/" options:NSBackwardsSearch];
+        NSString* subfix = [launchUrl substringFromIndex:(rang.location + rang.length)];
+        launchUrl = [NSString stringWithFormat:@"%@files/%@", libDir.absoluteString, subfix];
+        isFileExists = [[NSFileManager defaultManager] fileExistsAtPath:launchUrl isDirectory:&isDir] ||
+        ([[NSFileManager defaultManager] fileExistsAtPath:[launchUrl stringByReplacingOccurrencesOfString:@"file:///" withString:@"/"] isDirectory:&isDir]);
+    }
+    
     if (launchUrl && !isFileExists) {
         NSLog(@"launchUrl NOT exists %@, APP bundlePath=%@", launchUrl, [[NSBundle mainBundle] bundlePath]);
+#ifdef DEBUG
+        [[[UIAlertView alloc] initWithTitle:nil
+                                    message:[NSString stringWithFormat:@"%@ *** NOT *** exists", launchUrl]
+                                   delegate:nil
+                          cancelButtonTitle:@"OK"
+                          otherButtonTitles:nil] show];
+#endif
     }
 
     if([contentSrc isEqual:oldContentSrc] && isFileExists) {
