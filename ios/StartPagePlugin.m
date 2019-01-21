@@ -148,11 +148,14 @@ NSString* addVersionToUrlIfRequired(NSString* page) {
     if (launchUrl && !isFileExists) {
         NSLog(@"launchUrl NOT exists %@, APP bundlePath=%@", launchUrl, [[NSBundle mainBundle] bundlePath]);
 #ifdef DEBUG
-        [[[UIAlertView alloc] initWithTitle:nil
-                                    message:[NSString stringWithFormat:@"%@ *** NOT *** exists", launchUrl]
-                                   delegate:nil
-                          cancelButtonTitle:@"OK"
-                          otherButtonTitles:nil] show];
+        if ([launchUrl hasPrefix:@"file:///"] || [launchUrl hasPrefix:@"/"])
+        {
+            [[[UIAlertView alloc] initWithTitle:nil
+                                        message:[NSString stringWithFormat:@"%@ *** NOT *** exists", launchUrl]
+                                       delegate:nil
+                              cancelButtonTitle:@"OK"
+                              otherButtonTitles:nil] show];
+        }
 #endif
     }
 
