@@ -61,7 +61,9 @@ NSString* addVersionToUrlIfRequired(NSString* page) {
 - (void)setStartPageUrl:(CDVInvokedUrlCommand *)command {
 
     NSString *startPageUrl = [command.arguments objectAtIndex:0];
+    NSLog(@"********** doing setStartPageUrl %@", startPageUrl);
     if(startPageUrl) {
+        NSLog(@"********** 1");
         NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
         [defaults setObject:startPageUrl forKey:kStartPage];
         [defaults synchronize];
@@ -69,6 +71,7 @@ NSString* addVersionToUrlIfRequired(NSString* page) {
         [self.commandDelegate sendPluginResult: [CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
                                     callbackId: command.callbackId];
     } else {
+        NSLog(@"********** 2");
         [self.commandDelegate sendPluginResult: [CDVPluginResult
                                                  resultWithStatus: CDVCommandStatus_ERROR
                                                  messageAsString:  @"bad_url"]
@@ -138,27 +141,50 @@ NSString* addVersionToUrlIfRequired(NSString* page) {
     
     if ([launchUrl hasPrefix:@"file:///"] && !isFileExists) {
         NSURL* libDir = [CDVAppDelegate applicationLibraryDirectory];
-        NSRange rang = [launchUrl rangeOfString:@"/Library/files/" options:NSBackwardsSearch];
-        NSString* subfix = [launchUrl substringFromIndex:(rang.location + rang.length)];
-        launchUrl = [NSString stringWithFormat:@"%@files/%@", libDir.absoluteString, subfix];
+        launchUrl = [NSString stringWithFormat:@"%@files/live-upgrade/www/index.html", libDir.absoluteString];
         isFileExists = [[NSFileManager defaultManager] fileExistsAtPath:launchUrl isDirectory:&isDir] ||
         ([[NSFileManager defaultManager] fileExistsAtPath:[launchUrl stringByReplacingOccurrencesOfString:@"file:///" withString:@"/"] isDirectory:&isDir]);
+        
+        NSError *error;
+        if (isFileExists) {
+            NSString *fileContents = [NSString stringWithContentsOfFile:[launchUrl stringByReplacingOccurrencesOfString:@"file:///" withString:@"/"] encoding:NSUTF8StringEncoding error:&error];
+            if (error)
+                NSLog(@"Error reading file: %@ at %@", error.localizedDescription, launchUrl);
+
+            NSRange rg2 = [fileContents rangeOfString:@"cordova.js"];
+            NSRange rg1 = [fileContents rangeOfString:@"src=" options:NSBackwardsSearch range:NSMakeRange(0, rg2.location)];
+            NSString* cdvJs = [fileContents substringWithRange:NSMakeRange(rg1.location+4, rg2.location+rg2.length-rg1.location-4)];
+            NSLog(@"invoke cordova.js at %@", cdvJs);
+            BOOL isJsExists = [[NSFileManager defaultManager] fileExistsAtPath:cdvJs isDirectory:&isDir] ||
+            ([[NSFileManager defaultManager] fileExistsAtPath:[cdvJs stringByReplacingOccurrencesOfString:@"file:///" withString:@"/"] isDirectory:&isDir]);
+            if (!isJsExists) {
+                NSString* appDir = [[NSBundle mainBundle] resourcePath];
+                NSString* newCdvJS = [NSString stringWithFormat:@"%@/www/cordova.js", appDir];
+                if ([newCdvJS hasPrefix:@"/"] && ![newCdvJS hasPrefix:@"file:///"]) {
+                    newCdvJS = [NSString stringWithFormat:@"file://%@", newCdvJS];
+                }
+                isJsExists = [[NSFileManager defaultManager] fileExistsAtPath:newCdvJS isDirectory:&isDir] ||
+                ([[NSFileManager defaultManager] fileExistsAtPath:[newCdvJS stringByReplacingOccurrencesOfString:@"file:///" withString:@"/"] isDirectory:&isDir]);
+                NSLog(@"%@ %d", newCdvJS, isJsExists);
+                if (isJsExists) {
+                    NSString* newFileContents = [fileContents stringByReplacingOccurrencesOfString:cdvJs withString:newCdvJS];
+                    [newFileContents writeToFile:[launchUrl stringByReplacingOccurrencesOfString:@"file:///" withString:@"/"] atomically:YES encoding:NSUTF8StringEncoding error:&error];
+                }
+            }
+        }
     }
     
     if (launchUrl && !isFileExists) {
         NSLog(@"launchUrl NOT exists %@, APP bundlePath=%@", launchUrl, [[NSBundle mainBundle] bundlePath]);
-#ifdef DEBUG
-        if ([launchUrl hasPrefix:@"file:///"] || [launchUrl hasPrefix:@"/"])
-        {
-            [[[UIAlertView alloc] initWithTitle:nil
-                                        message:[NSString stringWithFormat:@"%@ *** NOT *** exists", launchUrl]
-                                       delegate:nil
-                              cancelButtonTitle:@"OK"
-                              otherButtonTitles:nil] show];
-        }
+#ifdef DEBUG2222
+        [[[UIAlertView alloc] initWithTitle:nil
+                                    message:[NSString stringWithFormat:@"%@ NOT exists", launchUrl]
+                                   delegate:nil
+                          cancelButtonTitle:@"OK"
+                          otherButtonTitles:nil] show];
 #endif
     }
-
+    
     if([contentSrc isEqual:oldContentSrc] && isFileExists) {
         self.viewController.startPage = launchUrl;
     } else {
