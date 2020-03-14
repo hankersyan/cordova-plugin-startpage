@@ -185,7 +185,7 @@ NSString* addVersionToUrlIfRequired(NSString* page) {
 #endif
     }
     
-    if([contentSrc isEqual:oldContentSrc] && isFileExists) {
+    if(([contentSrc isEqual:oldContentSrc] && isFileExists) || [launchUrl hasPrefix:@"http"]) {
         self.viewController.startPage = launchUrl;
     } else {
         self.viewController.startPage = contentSrc;
