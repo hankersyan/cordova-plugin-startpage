@@ -27,7 +27,6 @@ public class StartPagePlugin extends CordovaPlugin {
 
 	public static final String TAG = "StartPagePlugin";
     private CordovaPreferences preferences;
-    volatile private Context appContext;
     private String contentSrc;
     private boolean shouldAddVersionToUrl = false;
     private static boolean bootstrappedAlready = false;
@@ -60,7 +59,8 @@ public class StartPagePlugin extends CordovaPlugin {
     }
 
     protected void bootstrap() {
-        SharedPreferences defaults = PreferenceManager.getDefaultSharedPreferences(appContext);
+        Context ctx = cordova.getActivity().getApplicationContext();
+        SharedPreferences defaults = PreferenceManager.getDefaultSharedPreferences(ctx);
 
         // parse widget.content.src
         String contentSrc = this.contentSrc;
@@ -91,7 +91,8 @@ public class StartPagePlugin extends CordovaPlugin {
     protected String addVersionToUrlIfRequired(String page) {
         if(shouldAddVersionToUrl) {
             try {
-                PackageInfo pInfo = appContext.getPackageManager().getPackageInfo(appContext.getPackageName(), 0);
+                Context ctx = cordova.getActivity().getApplicationContext();
+                PackageInfo pInfo = ctx.getPackageManager().getPackageInfo(ctx.getPackageName(), 0);
                 String queryParamPrefix =
                         (page.contains("=") && page.contains("?")) ? "&":"?";
 
@@ -124,7 +125,6 @@ public class StartPagePlugin extends CordovaPlugin {
                 f.setAccessible(true);
                 contentSrc = (String)f.get(cordovaActivity);
 
-                appContext = cordova.getActivity().getApplicationContext();
                 bootstrap();
             } catch (NoSuchFieldException e) {
                 e.printStackTrace();
@@ -151,11 +151,13 @@ public class StartPagePlugin extends CordovaPlugin {
     @Override
 	public boolean execute(final String action, final JSONArray data, final CallbackContext callbackContext) throws JSONException {
 
+        Context ctx = cordova.getActivity().getApplicationContext();
+
   		if(action.equals("setStartPageUrl")){
 			final String startPageUrl = data.getString(0);
 
             if(startPageUrl != null) {
-                SharedPreferences defaults = PreferenceManager.getDefaultSharedPreferences(appContext);
+                SharedPreferences defaults = PreferenceManager.getDefaultSharedPreferences(ctx);
                 defaults.edit().putString(kStartPage,
                         finalizeUrl(startPageUrl)
                 ).apply();
@@ -166,17 +168,17 @@ public class StartPagePlugin extends CordovaPlugin {
 
   			return true;
   		} else if(action.equals("loadStartPage")) {
-            String urlContentSrc = addVersionToUrlIfRequired(PreferenceManager.getDefaultSharedPreferences(appContext).getString(contentSrc, contentSrc));
+            String urlContentSrc = addVersionToUrlIfRequired(PreferenceManager.getDefaultSharedPreferences(ctx).getString(contentSrc, contentSrc));
             forceLoadUrl(urlContentSrc);
             callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.NO_RESULT));
             return true;
 		} else if(action.equals("loadContentSrc")) {
-            String urlContentSrc = addVersionToUrlIfRequired(PreferenceManager.getDefaultSharedPreferences(appContext).getString(contentSrc, contentSrc));
+            String urlContentSrc = addVersionToUrlIfRequired(PreferenceManager.getDefaultSharedPreferences(ctx).getString(contentSrc, contentSrc));
             forceLoadUrl(urlContentSrc);
             callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.NO_RESULT));
             return true;
 		} else if(action.equals("resetStartPageToContentSrc")) {
-            SharedPreferences defaults = PreferenceManager.getDefaultSharedPreferences(appContext);
+            SharedPreferences defaults = PreferenceManager.getDefaultSharedPreferences(ctx);
             defaults.edit().putString(kStartPage, contentSrc).apply();
             callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
             return true;
