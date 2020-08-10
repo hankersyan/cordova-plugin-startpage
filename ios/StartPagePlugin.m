@@ -4,6 +4,7 @@
 #import <objc/runtime.h>
 #import "MainViewController.h"
 #import "XMLParser.h"
+#import <WebKit/WebKit.h>
 
 /// NSUserDefaults
 #define kStartPage @"StartPage"
@@ -52,7 +53,12 @@ NSString* addVersionToUrlIfRequired(NSString* page) {
     // Because it's a private function in cordova, we invoke it this way:
     cdvViewController.startPage = page;
     NSURL* url = [cdvViewController performSelector:@selector(appUrl)];
-    [(UIWebView*)self.webView loadRequest:[NSURLRequest requestWithURL:url]];
+    #if WK_WEB_VIEW_ONLY
+        [(WKWebView*)self.webView loadRequest:[NSURLRequest requestWithURL:url]];
+    #else
+        [(UIWebView*)self.webView loadRequest:[NSURLRequest requestWithURL:url]];
+    #endif
+
 }
 
 #pragma mark -
