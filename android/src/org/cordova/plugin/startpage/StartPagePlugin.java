@@ -153,7 +153,13 @@ public class StartPagePlugin extends CordovaPlugin {
 
         Context ctx = cordova.getActivity().getApplicationContext();
 
-  		if(action.equals("setStartPageUrl")){
+  		if(action.equals("getStartPageUrl")){
+            SharedPreferences defaults = PreferenceManager.getDefaultSharedPreferences(ctx);
+            String startPageUrl = defaults.getString(kStartPage, "");
+            callbackContext.success(startPageUrl);
+
+  			return true;
+  		} else if(action.equals("setStartPageUrl")){
 			final String startPageUrl = data.getString(0);
 
             if(startPageUrl != null) {
@@ -182,7 +188,7 @@ public class StartPagePlugin extends CordovaPlugin {
             defaults.edit().putString(kStartPage, contentSrc).apply();
             callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
             return true;
-    }
+        }
 		return false;
 	}
 

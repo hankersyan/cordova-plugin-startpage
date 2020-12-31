@@ -64,6 +64,14 @@ NSString* addVersionToUrlIfRequired(NSString* page) {
 #pragma mark -
 #pragma mark Cordova Commmands
 
+- (void)getStartPageUrl:(CDVInvokedUrlCommand *)command {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString* startPageUrl = [defaults valueForKey:kStartPage];
+
+    [self.commandDelegate sendPluginResult: [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:startPageUrl]
+                                callbackId: command.callbackId];
+}
+
 - (void)setStartPageUrl:(CDVInvokedUrlCommand *)command {
 
     NSString *startPageUrl = [command.arguments objectAtIndex:0];

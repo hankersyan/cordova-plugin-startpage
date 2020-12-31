@@ -46,6 +46,11 @@ var startpage = cordova.require('cordova-plugin-startpage.StartPagePlugin');
 startpage.setStartPageUrl('http://myUrl.com', function success(){}, function error(){});
 ```
 
+### To get the start page
+```js
+startpage.getStartPageUrl(function(startPageUrl){alert(startPageUrl);});
+```
+
 ### To reload the url from widget.content.src in config.xml
 ```js
 startpage.loadContentSrc();

@@ -12,6 +12,10 @@ startpage.prototype.setStartPageUrl = function (url, successCallback, errorCallb
     cordova.exec(successCallback, errorCallback, "StartPagePlugin", "setStartPageUrl", [url]);
 };
 
+startpage.prototype.getStartPageUrl = function (successCallback, errorCallback) {
+    cordova.exec(successCallback, errorCallback, "StartPagePlugin", "getStartPageUrl", []);
+};
+
 startpage.prototype.resetStartPageToContentSrc = function (successCallback, errorCallback) {
     cordova.exec(successCallback, errorCallback, "StartPagePlugin", "resetStartPageToContentSrc", []);
 };
